@@ -47,3 +47,5 @@ bower.json
 # Ignore node_modules
 node_modules/
 
+# Ignore the user_collection
+data_generator/user_collection.p
