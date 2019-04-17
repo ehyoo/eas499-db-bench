@@ -1,3 +1,6 @@
 
 # Ignore the user_collection
-data_generator/data/*.pickle
+data_generator/data/*.json
+
+# Ignore node_modules
+mongodb/node_modules

@@ -1,7 +1,7 @@
 import random
 import string
 import time
-import pickle
+import json
 import numpy as np
 
 ##########################
@@ -17,7 +17,7 @@ merchandise_collection = []
 orders_collection = []
 
 ### Parameters
-num_users = 25000
+num_users = 100000
 threshhold = 0.2 # 20% of our users are merchants.
 lambda_merch_offered = 10
 
@@ -142,8 +142,13 @@ print('Generated ' + str(len(users_collection)) + \
 
 print('Writing data...')
 
-pickle.dump(users_collection, open('./data/users.pickle', 'wb'))
-pickle.dump(merchandise_collection, open('./data/merchandise.pickle', 'wb'))
-pickle.dump(orders_collection, open('./data/orders.pickle', 'wb'))
+with open('./data/users.json', 'w+') as f:
+    json.dump(users_collection, f)
+
+with open('./data/merchandise.json', 'w+') as f:
+    json.dump(merchandise_collection, f)
+
+with open('./data/orders.json', 'w+') as f:
+    json.dump(orders_collection, f)
 
 print('Script done.')
