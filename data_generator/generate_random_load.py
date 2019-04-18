@@ -3,6 +3,7 @@ import string
 import time
 import json
 import numpy as np
+import pandas as pd
 
 ##########################
 ## Parameters and Setup ##
@@ -151,4 +152,8 @@ with open('./data/merchandise.json', 'w+') as f:
 with open('./data/orders.json', 'w+') as f:
     json.dump(orders_collection, f)
 
+print('Writing data to CSV...')
+pd.read_json('./data/users.json', orient='records').to_csv('./data/users.csv', index=False)
+pd.read_json('./data/orders.json', orient='records', convert_dates=False).to_csv('./data/orders.csv',index=False)
+pd.read_json('./data/merchandise.json', orient='records', convert_dates=False).to_csv('./data/merchandise.csv', index=False)
 print('Script done.')

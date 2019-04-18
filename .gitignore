@@ -1,6 +1,12 @@
 
 # Ignore the user_collection
 data_generator/data/*.json
+data_generator/data/*.csv
 
 # Ignore node_modules
 mongodb/node_modules
+cassandra/node_modules
+node_modules
+
+# ignore .vscode
+.vscode
