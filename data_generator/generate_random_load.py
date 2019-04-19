@@ -154,6 +154,24 @@ with open('./data/orders.json', 'w+') as f:
 
 print('Writing data to CSV...')
 pd.read_json('./data/users.json', orient='records').to_csv('./data/users.csv', index=False)
-pd.read_json('./data/orders.json', orient='records', convert_dates=False).to_csv('./data/orders.csv',index=False)
 pd.read_json('./data/merchandise.json', orient='records', convert_dates=False).to_csv('./data/merchandise.csv', index=False)
+pd.read_json('./data/orders.json', orient='records', convert_dates=False).to_csv('./data/orders.csv', index=False)
+expanded = []
+reverse = []
+for order in orders_collection:
+    for merch in order['merchandiseOrdered']:
+        newOrder = {
+            'customer': order['customer'],
+            'timestamp': order['timestamp'],
+            'merchandiseId': merch['id']
+        }
+        expanded.append(newOrder)
+# We break this up so Neo4j doesn't go berserk.
+pd.DataFrame(expanded[:250000]).to_csv('./data/orders_flattened_1.csv', index=False)
+pd.DataFrame(expanded[250000:500000]).to_csv('./data/orders_flattened_2.csv', index=False)
+pd.DataFrame(expanded[500000:750000]).to_csv('./data/orders_flattened_3.csv', index=False)
+pd.DataFrame(expanded[750000:1000000]).to_csv('./data/orders_flattened_4.csv', index=False)
+pd.DataFrame(expanded[1000000:1250000]).to_csv('./data/orders_flattened_5.csv', index=False)
+pd.DataFrame(expanded[1250000:]).to_csv('./data/orders_flattened_6.csv', index=False)
 print('Script done.')
+
