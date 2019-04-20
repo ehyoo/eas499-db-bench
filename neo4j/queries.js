@@ -78,7 +78,14 @@ const popularity = function getTopThreeMostOrderedItemsForTimeRange(lowerBound, 
     upperBound: upperBound
   };
   const resultPromise = session.run(query, queryParameters);
-  promiseHelper(resultPromise, callback);
+  resultPromise.then(res => {
+    res.records.forEach((record) => {
+      console.log(record);
+    });
+    callback();
+  }).catch(err => {
+    console.log(err);
+  });
 }
 
 // usersByBirthday(818125896, 818135996, () => driver.close());

@@ -6,7 +6,7 @@ Supplementary material to run performance tests on three NoSQL databases: MongoD
 ## Premise
 Despite NoSQL databases taking a significant role in modern data management, it is unclear what they
 are truly capable of and under what conditions they excel or fall behind.  
-We present some modern tests that seek to simulate some queries that might occur.
+We present some tests that seek to simulate some queries that might occur.
 
 ## The Data Model
 To test this, we create a simple e-commerse data model. We have three main models: the user, the 
@@ -50,4 +50,7 @@ We provide five separate queries:
  * `getTopThreeMostOrderedItemsForTimeRange`: Given two dates, find the three most ordered items.
 
 ## Setup and Execution
-TODO
+Run `generate_random_load.py`, and follow the READMEs in each database directory to setup and seed the 
+databases with the data.
+
+
