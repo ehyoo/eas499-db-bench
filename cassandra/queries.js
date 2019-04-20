@@ -1,32 +1,27 @@
-// starter code from https://github.com/datastax/nodejs-driver]
-// and https://academy.datastax.com/units/getting-started-apache-cassandra-and-nodejs?resource=getting-started-apache-cassandra-and-nodejs
-const cassandra = require('cassandra-driver');
-const async = require('async');
-
-const client = new cassandra.Client({
-  localDataCenter: 'datacenter1',
-  contactPoints: ['127.0.0.1'],
-  keyspace: 'eas499'
-});
-
-const usersByBirthday = function findUsersWithBirthdaysInRange(lowerBound, upperBound, cb) {
+const usersByBirthday = function findUsersWithBirthdaysInRange(client, lowerBound, upperBound, cb) {
   // Note that, to execute this, we have to utilize "ALLOW FILTERING"
   // Why? https://www.datastax.com/dev/blog/allow-filtering-explained-2
   // Cassandra in the backend retrieves all the rows, then filters out the ones that aren't desired. So, 
   // obviously, this does not leverage Cassandra's strengths, though it does allow us to execute our queries. 
   const query = 'SELECT * FROM users WHERE birthday < ? AND birthday > ? ALLOW FILTERING';
   client.execute(query, [upperBound, lowerBound], {prepare: true}).then(res => {
-    console.log(res);
+    // console.log(res);
+    cb();
+  }).catch(err => {
+    console.log(err);
     cb();
   });
 };
 
-const ordersByRange = function findOrdersWithTimestampInRange(customer, lowerBound, upperBound, cb) {
+const ordersByRange = function findOrdersWithTimestampInRange(client, customer, lowerBound, upperBound, cb) {
   const query = 'SELECT * FROM orders WHERE customer = ? AND timestamp < ? AND timestamp > ?';
   client.execute(query, [customer, upperBound, lowerBound], {prepare: true}).then(res => {
-    console.log(res);
+    // console.log(res);
     cb();
-  }); 
+  }).catch(err => {
+    console.log(err);
+    cb();
+  });
 };
 
 
@@ -63,18 +58,22 @@ const ordersByRange = function findOrdersWithTimestampInRange(customer, lowerBou
 /**
  * We have to do a pseudo-join here, which is why we have to pipeline two queries together.
  */
-const aggregateSpend = function getAggregateSpendingAmountForUser(customer, callback) {
+const aggregateSpend = function getAggregateSpendingAmountForUser(client, customer, callback) {
   const query1 = 'SELECT merchandiseid FROM orders WHERE customer = ?';
   client.execute(query1, [customer], {prepare: true}).then(res => {
-    sumResults(customer, res.rows.map(r => r.merchandiseid), callback);
+    sumResults(client, customer, res.rows.map(r => r.merchandiseid), callback);
   }).catch(err => {
-    console.log(err);
-    client.shutdown();
+    // console.log(err);
+    callback();
   });
 }
 
-const sumResults = function sumAllMerchandiseOrderedForUser(customer, merchandiseBoughtList, callback) {
+const sumResults = function sumAllMerchandiseOrderedForUser(client, customer, merchandiseBoughtList, callback) {
   const query2 = 'SELECT * FROM merch WHERE id IN ?';
+  if (merchandiseBoughtList.length < 1) {
+    console.log('no id');
+    return callback();
+  }
   client.execute(query2, [merchandiseBoughtList], {prepare: true}).then(res => {
     const idPriceObject = {};
     res.rows.forEach(row => {
@@ -85,7 +84,7 @@ const sumResults = function sumAllMerchandiseOrderedForUser(customer, merchandis
       aggregateCost += idPriceObject[merch];
     });
     // there are floating point issues, but that's not important for us.
-    console.log({customer, aggregateCost}); 
+    // console.log({customer, aggregateCost}); 
     callback();
   }).catch(err => {
     console.log(err);
@@ -104,7 +103,7 @@ const sumResults = function sumAllMerchandiseOrderedForUser(customer, merchandis
  * 
  * Once again, we do more work on the client side to get our desired results
  */
-const popularity = function getTopThreeMostOrderedItemsForTimeRange(lowerBound, upperBound, callback) {
+const popularity = function getTopThreeMostOrderedItemsForTimeRange(client, lowerBound, upperBound, callback) {
   // The general strategy: find the rows within the timestamp
   const query = 'SELECT * FROM orders WHERE timestamp > ? AND timestamp < ? ALLOW FILTERING';
   const countObj = {};
@@ -146,7 +145,7 @@ const popularity = function getTopThreeMostOrderedItemsForTimeRange(lowerBound, 
         }
       };
     });
-    console.log(rankArr);
+    // console.log(rankArr);
     callback();
   });
 }
@@ -154,8 +153,9 @@ const popularity = function getTopThreeMostOrderedItemsForTimeRange(lowerBound, 
 // select merchandiseId, count(merchandiseId) AS num_times_ordered from orders where 
 // timestamp > 1535060020 and timestamp < 1555060320 GROUP BY customer, timestamp allow filtering;
 
-// usersByBirthday(818125896, 818135996, () => client.shutdown());
-// ordersByRange('jLHbGPug00', 0, 1545616608, () => client.shutdown());
-// recEngine('jLHbGPug00', () => client.shutdown());
-aggregateSpend('jLHbGPug00', () => client.shutdown());
-// popularity(1511560866, 1522660866, () => client.shutdown());
+module.exports = {
+  usersByBirthday,
+  ordersByRange,
+  aggregateSpend,
+  popularity
+};
