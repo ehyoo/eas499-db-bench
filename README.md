@@ -9,7 +9,7 @@ are truly capable of and under what conditions they excel or fall behind.
 We present some tests that seek to simulate some queries that might occur.
 
 ## The Data Model
-To test this, we create a simple e-commerse data model. We have three main models: the user, the 
+To test this, we create a simple e-commerce data model. We have three main models: the user, the 
 order, and the merchandise.
 
 The user:

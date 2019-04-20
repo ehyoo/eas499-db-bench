@@ -54,14 +54,14 @@ const recEngine = function getRecommendedMerchandiseForUser(db, userId) {
       client.close();
     });
   });
-}
+};
 
 const findUniqueUserMerch = function findAllUniqueMerchandiseUserOrdered(db, userId, cb) {
   const ordersCollection = db.collection('orders');
   ordersCollection.distinct('merchandiseOrdered', {'_id.customer': userId}, (err, res) => {
     cb(res);
   });
-}
+};
 
 const findRelatedMerchandise = function findRelatedMerchandise(db, merchArr, cb) {
   const ordersCollection = db.collection('orders');
@@ -75,7 +75,44 @@ const findRelatedMerchandise = function findRelatedMerchandise(db, merchArr, cb)
       });
     }
    );
-}
+};
+
+const aggregateSpend = function getAggregateSpendingAmountForUser(db, customer, cb) {
+  const ordersCollection = db.collection('orders');
+  ordersCollection.aggregate([
+    {$match: {'_id.customer': customer}},
+    {$unwind: '$merchandiseOrdered'},
+    {$group: {'_id': customer, 'aggSpend': {$sum: '$merchandiseOrdered.price'}}}
+  ]).toArray((err, res) => {
+    if (!err) {
+      console.log(res);
+    } else {
+      console.log(err);
+    }
+    cb();
+  });
+};
+
+const popularity = function getTopThreeMostOrderedItemsForTimeRange(db, lowerBound, upperBound, cb) {
+  const ordersCollection = db.collection('orders');
+  console.lo
+  ordersCollection.aggregate([
+    {$match: {'_id.timestamp': {'$gt': lowerBound, '$lt': upperBound}}},
+    {$unwind: '$merchandiseOrdered'},
+    {$group: {_id: '$merchandiseOrdered.id', count: {$sum: 1}}},
+    {$sort: {count: -1}},
+    {$limit: 3}
+  ]).toArray((err, res) => {
+    if (!err) {
+      console.log(res);
+    } else {
+      console.log(err);
+    }
+    cb();
+  });
+};
+
+
 
 // Use connect method to connect to the Server
 client.connect(function(err) {
@@ -84,7 +121,9 @@ client.connect(function(err) {
     const db = client.db(dbName);
     // usersByBirthday(db, 853306370, 853356370, () => client.close());
     // ordersByRange(db, 'jLHbGPug00', 1535060020, 1555060320, () => client.close());
-    recEngine(db, "jLHbGPug00");
+    // recEngine(db, "jLHbGPug00");
+    // aggregateSpend(db, 'jLHbGPug00', () => client.close());
+    // popularity(db, 1511560866, 1522660866, () => client.close());
   }
 );
 
