@@ -21,17 +21,12 @@ CREATE TABLE merch (
   price double
 );
 
-CREATE TYPE merchScreenshot (
-  id text,
-  price double
-);
-
 CREATE TABLE orders (
   customer text,
   timestamp bigint,
-  merchandiseOrdered set<FROZEN <merchScreenshot>>,
-  PRIMARY KEY (customer, timestamp)
-) WITH CLUSTERING ORDER BY (timestamp DESC);
+  merchandiseId text,
+  PRIMARY KEY (customer, timestamp, merchandiseId)
+) WITH CLUSTERING ORDER BY (timestamp DESC, merchandiseId DESC);
 ```
 
 ### Seeding the Database
@@ -40,15 +35,19 @@ Cassandra doesn't allow bulk loads in the same way that MongoDB does- utilize CQ
 Before inserting users, rename "email" to "id"- oversight on my part for this.
 ```
 COPY eas499.users (birthday, id, firstname, lastname, listedmerch) FROM '/my/path/to/users.csv' WITH HEADER=TRUE;
-COPY eas499.orders (customer, merchandiseOrdered, timestamp) FROM '/my/path/to/orders.csv' WITH HEADER=TRUE;
+COPY eas499.orders (customer, merchandiseId, timestamp) FROM '/my/path/to/orders_flattened.csv' WITH HEADER=TRUE;
 COPY eas499.merch (id, price) FROM '/my/path/to/merchandise.csv' WITH HEADER=TRUE;
 ```
-Note that orders is going to take an especially long time (~7 minutes on my local machine).
+
+Finally, create a secondary index on merchandiseId
+```
+create index merchIdIndex on orders (merchandiseId);
+```
 <!-- 
 For me:
 COPY eas499.users (birthday, id, firstname, lastname, listedmerch) FROM '/mnt/c/Users/ehyoo/Documents/dev/eas499-db-bench/data_generator/data/users.csv' WITH HEADER=
 TRUE;
-COPY eas499.orders (customer, merchandiseOrdered, timestamp) FROM '/mnt/c/Users/ehyoo/Documents/dev/eas499-db-bench/data_generator/data/orders.csv' WITH HEADER=TRUE;
+COPY eas499.orders (customer, merchandiseId, timestamp) FROM '/mnt/c/Users/ehyoo/Documents/dev/eas499-db-bench/data_generator/data/orders_flattened.csv' WITH HEADER=TRUE;
 COPY eas499.merch (id, price) FROM '/mnt/c/Users/ehyoo/Documents/dev/eas499-db-bench/data_generator/data/merchandise.csv' WITH HEADER=TRUE;
 -->
 

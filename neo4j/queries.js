@@ -52,7 +52,8 @@ const recEngine = function getRecommendedMerchandiseForUser(customer, callback) 
   };
   const resultPromise = session.run(query, queryParameters);
   resultPromise.then(res => {
-    session.close();
+    console.log(res);
+    console.log(res.records.length);
     callback();
   }).catch(err => {
     console.log(err);
@@ -61,4 +62,4 @@ const recEngine = function getRecommendedMerchandiseForUser(customer, callback) 
 
 // usersByBirthday(818125896, 818135996, () => driver.close());
 // ordersByRange('jLHbGPug00', 1535060020, 1555060320, () => driver.close());
-// recEngine('jLHbGPug00', () => driver.close());
+recEngine('jLHbGPug00', () => driver.close());

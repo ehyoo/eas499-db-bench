@@ -19,9 +19,15 @@ orders_collection = []
 
 ### Parameters
 num_users = 100000
+# Latent state of user
 threshhold = 0.2 # 20% of our users are merchants.
-lambda_merch_offered = 10
-
+# Poisson parameters
+lambda_merch_offered = 10 # num. merch offered ~ Poisson
+lambda_number_orders_per_user = 5 # num. orders per user ~ Poisson
+lambda_merch_in_order = 2 # number of merchandise for an order ~ Poisson
+# Gamma parameters
+merch_shape = 10
+merch_scale = 3
 
 #############
 ## Methods ##
@@ -78,10 +84,20 @@ def create_new_merch():
     '''
     merchandise_obj = {}
     merchandise_obj['id'] = generate_random_string(str_len=10)
-    merchandise_obj['price'] = round(np.random.gamma(shape=10, scale=3), 2)
+    merchandise_obj['price'] = round(np.random.gamma(shape=merch_shape, scale=merch_scale), 2)
     return merchandise_obj
 
 def create_new_order(customer_email, merch_list):
+    '''
+    Generates a Order dictionary with the following structure:
+    {
+        customer: str
+        timestamp: long that represents a date between 1/1/2016-5/1/2019 (range selected arbitrarily)
+        merchandiseOrdered: [{merchandise object}]
+    }
+    We embed merchandise ordered to represent a "snapshot" of the order. One can imagine that a 
+    merchant would update their listings, but that should not change what the user ordered. 
+    '''
     order_obj = {}
     order_obj['customer'] = customer_email
     order_obj['timestamp'] = generate_random_timestamp(start='1/1/2016', end='5/1/2019')
@@ -98,7 +114,7 @@ def generate_merchandise_list(num_to_generate):
 
 def generate_orders_for_user(customer_email, num_orders):
     for i in range(num_orders):
-        num_merch_in_order = np.random.poisson(lam=2) + 1
+        num_merch_in_order = np.random.poisson(lam=lambda_merch_in_order) + 1
         merch_in_order = random.sample(merchandise_collection, k=num_merch_in_order)
         order = create_new_order(customer_email, merch_in_order)
         orders_collection.append(order)
@@ -127,11 +143,11 @@ print('Done.')
 
 # Second pass, generate orders
 # for each user, generate a number from Poisson(5)
-# Then, for each order, generate a number from (Poisson(3) + 1)
+# Then, for each order, generate a number from (Poisson(2) + 1)
 print('Executing second pass: generating orders....')
 for i in range(num_users):
     curr_user = users_collection[i]
-    num_orders = np.random.poisson(lam=5)
+    num_orders = np.random.poisson(lam=lambda_number_orders_per_user)
     generate_orders_for_user(curr_user['email'], num_orders)
     if i % 1000 == 0:
         print(i)
@@ -153,11 +169,22 @@ with open('./data/orders.json', 'w+') as f:
     json.dump(orders_collection, f)
 
 print('Writing data to CSV...')
-pd.read_json('./data/users.json', orient='records').to_csv('./data/users.csv', index=False)
-pd.read_json('./data/merchandise.json', orient='records', convert_dates=False).to_csv('./data/merchandise.csv', index=False)
-pd.read_json('./data/orders.json', orient='records', convert_dates=False).to_csv('./data/orders.csv', index=False)
+pd.read_json('./data/users.json',
+              orient='records')\
+                  .to_csv('./data/users.csv', index=False)
+pd.read_json('./data/merchandise.json',
+             orient='records',
+             convert_dates=False)\
+                 .to_csv('./data/merchandise.csv', index=False)
+pd.read_json('./data/orders.json',
+             orient='records',
+             convert_dates=False)\
+                 .to_csv('./data/orders.csv', index=False)
+
+# Then "flatten" our orders for ease of insertion for Cassandra and Neo4j
+# That is, make each combination of (customer, timestamp, merchandise in order) a row,
+# instead of nesting all the merchandise in a single row
 expanded = []
-reverse = []
 for order in orders_collection:
     for merch in order['merchandiseOrdered']:
         newOrder = {
@@ -166,7 +193,10 @@ for order in orders_collection:
             'merchandiseId': merch['id']
         }
         expanded.append(newOrder)
-# We break this up so Neo4j doesn't go berserk.
+
+# First the entire data set (for Cassandra)
+pd.DataFrame(expanded).to_csv('./data/orders_flattened.csv', index=False)
+# Then we break this up so Neo4j doesn't go berserk.
 pd.DataFrame(expanded[:250000]).to_csv('./data/orders_flattened_1.csv', index=False)
 pd.DataFrame(expanded[250000:500000]).to_csv('./data/orders_flattened_2.csv', index=False)
 pd.DataFrame(expanded[500000:750000]).to_csv('./data/orders_flattened_3.csv', index=False)

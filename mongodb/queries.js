@@ -27,11 +27,12 @@ const usersByBirthday = function findUsersWithBirthdaysInRange(
 };
 
 // find orders between ... and ...
+// TODO: edit this query so we're looking for some specific user.
 const ordersByRange = function findOrdersWithTimestampInRange(
-  db, lowerBound, upperBound, callback) {
+  db, customer, lowerBound, upperBound, callback) {
   
   const ordersCollection = db.collection('orders');
-  const query = {'_id.timestamp': {$gt: lowerBound, $lt: upperBound}};
+  const query = {'_id.customer': customer, '_id.timestamp': {$gt: lowerBound, $lt: upperBound}};
   ordersCollection.find(query).toArray((err, res) => {
     if (!err) {
       console.log(res);
@@ -45,43 +46,35 @@ const ordersByRange = function findOrdersWithTimestampInRange(
 
 // rec engine: for a user, query what other items they have given what they bought.
 const recEngine = function getRecommendedMerchandiseForUser(db, userId) {
-  const usersCollection = db.collection('users');
-  usersCollection.findOne({_id: userId}, (err, res) => {
-    const user = res;
-    findUniqueUserMerch(db, user, (merchSet) => {
-      findRelatedMerchandise(db, merchSet, (recommendedMerch) => {
-        console.log(recommendedMerch);
-        client.close();
-      });
+  findUniqueUserMerch(db, userId, (merchArr) => {
+    findRelatedMerchandise(db, merchArr, (recommendedMerch) => {
+      console.log(recommendedMerch);
+      console.log(recommendedMerch.length)
+      console.log(merchArr.length)
+      client.close();
     });
   });
 }
 
-const findUniqueUserMerch = function findAllUniqueMerchandiseUserOrdered(db, userObject, cb) {
+const findUniqueUserMerch = function findAllUniqueMerchandiseUserOrdered(db, userId, cb) {
   const ordersCollection = db.collection('orders');
-  ordersCollection.find({'_id.customer': userObject._id}).toArray((err, res) => {
-    const merchandiseOrdered = new Set();
-    res.forEach((order) => {
-      order.merchandiseOrdered.forEach(merch => merchandiseOrdered.add(merch));
-    });
-    cb(merchandiseOrdered);
+  ordersCollection.distinct('merchandiseOrdered', {'_id.customer': userId}, (err, res) => {
+    cb(res);
   });
 }
 
-const findRelatedMerchandise = function findRelatedMerchandise(db, merchandiseSet, cb) {
-  const merchArr = Array.from(merchandiseSet);
+const findRelatedMerchandise = function findRelatedMerchandise(db, merchArr, cb) {
   const ordersCollection = db.collection('orders');
   const merchCollection = db.collection('merch');
-
-  ordersCollection.find({merchandiseOrdered: {'$in': merchArr}}).toArray((err, relatedOrders) => {
-    const relatedMerchandiseId = new Set();
-    relatedOrders.forEach((order) => {
-      order.merchandiseOrdered.forEach(merch => relatedMerchandiseId.add(merch.id));
-    });
-    merchCollection.find({_id: {'$in': Array.from(relatedMerchandiseId)}}).toArray((err, recommendedMerch) => {
-      cb(recommendedMerch);
-    });
-  });
+  ordersCollection.distinct('merchandiseOrdered.id',
+    {merchandiseOrdered: {'$in': merchArr}},
+    (err, relatedMerch) => {
+      // Then we make one more hop since we want the most recent. 
+      merchCollection.find({_id: {'$in': relatedMerch}}).toArray((err, recommendedMerch) => {
+        cb(recommendedMerch);
+      });
+    }
+   );
 }
 
 // Use connect method to connect to the Server
@@ -90,8 +83,11 @@ client.connect(function(err) {
     console.log("Connected successfully to server");
     const db = client.db(dbName);
     // usersByBirthday(db, 853306370, 853356370, () => client.close());
-    // ordersByRange(db, 1506638727, 1506639927, () => client.close());
-    // recEngine(db, "0bZB535ya5");
+    // ordersByRange(db, 'jLHbGPug00', 1535060020, 1555060320, () => client.close());
+    recEngine(db, "jLHbGPug00");
   }
 );
 
+// Note there is a slight discrepancy between this and Neo4j- this returns all the orders (including)
+// the ones originally ordered
+// While Neo4j returns the orders that don't include the ones originally ordered
