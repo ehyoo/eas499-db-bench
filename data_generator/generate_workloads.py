@@ -8,7 +8,7 @@ random.seed(21) # Deterministic output
 np.random.seed(21)
 
 ### Parameters
-num_ops_per_load = 1000 # We'll do 1000 calls per test.
+num_ops_per_load = 100 # We'll do 100 calls per test.
 mixed_test_read_proportion = 0.8 # 80% of our "mixed" workload are reads.
 lambda_merch_in_order = 2
 

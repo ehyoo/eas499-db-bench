@@ -1,14 +1,3 @@
-const MongoClient = require('mongodb').MongoClient;
-const assert = require('assert');
-const fs = require('fs');
-
-// Connection URL
-const url = 'mongodb://localhost:27017';
-// Database Name
-const dbName = 'eas499';
-// Create a new MongoClient
-const client = new MongoClient(url);
-
 // find users with birthdays between...
 const usersByBirthday = function findUsersWithBirthdaysInRange(
   db, lowerBound, upperBound, callback) {
@@ -17,12 +6,13 @@ const usersByBirthday = function findUsersWithBirthdaysInRange(
   const query = {birthday: {$gt: lowerBound, $lt: upperBound}}
   usersCollection.find(query).toArray((err, res) => {
     if (!err) {
-      console.log(res);
+      // console.log(res); // for correctness- the actual output doesn't really matter.
+      callback();
     } else {
       console.log('There was an error:')
       console.log(err);
+      callback();
     }
-    callback();
   });
 };
 
@@ -35,23 +25,25 @@ const ordersByRange = function findOrdersWithTimestampInRange(
   const query = {'_id.customer': customer, '_id.timestamp': {$gt: lowerBound, $lt: upperBound}};
   ordersCollection.find(query).toArray((err, res) => {
     if (!err) {
-      console.log(res);
+      // console.log(res);
+      callback();
     } else {
       console.log('there was an error:')
       console.log(err);
+      callback();
     }
-    callback();
   }); 
 };
 
-// rec engine: for a user, query what other items they have given what they bought.
-const recEngine = function getRecommendedMerchandiseForUser(db, userId) {
+
+// Note there is a slight discrepancy between this and Neo4j- this returns all the orders (including)
+// the ones originally ordered
+// While Neo4j returns the orders that don't include the ones originally ordered
+const recEngine = function getRecommendedMerchandiseForUser(db, userId, cb) {
   findUniqueUserMerch(db, userId, (merchArr) => {
     findRelatedMerchandise(db, merchArr, (recommendedMerch) => {
-      console.log(recommendedMerch);
-      console.log(recommendedMerch.length)
-      console.log(merchArr.length)
-      client.close();
+      // console.log(recommendedMerch);
+      cb();
     });
   });
 };
@@ -85,11 +77,12 @@ const aggregateSpend = function getAggregateSpendingAmountForUser(db, customer, 
     {$group: {'_id': customer, 'aggSpend': {$sum: '$merchandiseOrdered.price'}}}
   ]).toArray((err, res) => {
     if (!err) {
-      console.log(res);
+      // console.log(res);
+      cb();
     } else {
       console.log(err);
+      cb();
     }
-    cb();
   });
 };
 
@@ -103,29 +96,19 @@ const popularity = function getTopThreeMostOrderedItemsForTimeRange(db, lowerBou
     {$limit: 3}
   ]).toArray((err, res) => {
     if (!err) {
-      console.log(res);
+      // console.log(res);
+      cb();
     } else {
       console.log(err);
+      cb();
     }
-    cb();
   });
 };
 
-
-
-// Use connect method to connect to the Server
-client.connect(function(err) {
-    assert.equal(null, err);
-    console.log("Connected successfully to server");
-    const db = client.db(dbName);
-    // usersByBirthday(db, 853306370, 853356370, () => client.close());
-    // ordersByRange(db, 'jLHbGPug00', 1535060020, 1555060320, () => client.close());
-    // recEngine(db, "jLHbGPug00");
-    // aggregateSpend(db, 'jLHbGPug00', () => client.close());
-    // popularity(db, 1511560866, 1522660866, () => client.close());
-  }
-);
-
-// Note there is a slight discrepancy between this and Neo4j- this returns all the orders (including)
-// the ones originally ordered
-// While Neo4j returns the orders that don't include the ones originally ordered
+module.exports = {
+  usersByBirthday,
+  ordersByRange,
+  recEngine,
+  aggregateSpend,
+  popularity
+};
