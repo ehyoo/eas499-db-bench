@@ -1,15 +1,10 @@
-const MongoClient = require('mongodb').MongoClient;
+const neo4j = require('neo4j-driver').v1;
 const async = require('async');
 const fs = require('fs');
 const performance = require('perf_hooks').performance;
+const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'asdfasdf')); // we're just on a localhost.
+const db = driver.session();
 const Queries = require('./queries.js');
-
-// Connection URL
-const url = 'mongodb://localhost:27017';
-// Database Name
-const dbName = 'eas499';
-// Create a new MongoClient
-const client = new MongoClient(url);
 
 const resultDict = {};
 
@@ -21,9 +16,9 @@ const runBirthdayQueries = function runBirthdayQueries(db, cb) {
   readOnlyLoad.forEach(query => {
     const execFunction = (endCallback) => {
       Queries.usersByBirthday(db,
-                                   query.lowerBound,
-                                   query.upperBound,
-                                   () => endCallback(null, null));
+                             query.lowerBound,
+                             query.upperBound,
+                             () => endCallback(null, null));
     }
     opArr.push(execFunction);
   });
@@ -45,10 +40,10 @@ const runOrdersByRangeQueries = function runOrdersByRangeQueries(db, cb) {
   readOnlyLoad.forEach(query => {
     const execFunction = (endCallback) => {
       Queries.ordersByRange(db,
-                                 query.customer,
-                                 query.lowerBound,
-                                 query.upperBound,
-                                 () => endCallback(null, null));
+                           query.customer,
+                           query.lowerBound,
+                           query.upperBound,
+                           () => endCallback(null, null));
     }
     opArr.push(execFunction);
   });
@@ -70,8 +65,8 @@ const runRecEngineQueries = function runRecEngineQueries(db, cb) {
   readOnlyLoad.forEach(query => {
     const execFunction = (endCallback) => {
       Queries.recEngine(db,
-                             query.customer,
-                             () => endCallback(null, null));
+                       query.customer,
+                       () => endCallback(null, null));
     }
     opArr.push(execFunction);
   });
@@ -133,18 +128,14 @@ const runPopularityQueries = function runPopularityQueries(db, cb) {
   });
 }
 
-// Use connect method to connect to the Server
-client.connect((err) => {
-    console.log("Connected successfully to server");
-    const db = client.db(dbName);
-    async.waterfall([
-      (cb) => runBirthdayQueries(db, cb),
-      (cb) => runOrdersByRangeQueries(db, cb),
-      (cb) => runRecEngineQueries(db, cb),
-      (cb) => runAggregateSpendQueries(db, cb),
-      (cb) => runPopularityQueries(db, cb),
-      (cb) => {console.log(resultDict); client.close()}
-    ]);
-  }
-);
+async.waterfall([
+  (cb) => runBirthdayQueries(db, cb),
+  (cb) => runOrdersByRangeQueries(db, cb),
+  (cb) => runRecEngineQueries(db, cb),
+  (cb) => runAggregateSpendQueries(db, cb),
+  (cb) => runPopularityQueries(db, cb),
+  (cb) => {console.log(resultDict); db.close(); driver.close();}
+]);
+  
+
 

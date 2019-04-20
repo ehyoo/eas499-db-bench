@@ -54,10 +54,12 @@ def generate_random_birthday_read():
 
 def generate_random_order_read():
 	delta = 7884000
+	random_user = random.choice(users_collection)
 	start_date = generate_random_timestamp(start='1/1/2016', end='5/1/2019')
 	end_date = start_date + delta
 	read_operation = {
 		'operation': 'ordersByRange',
+		'customer': random_user['email'],
 		'lowerBound': start_date,
 		'upperBound': end_date
 	}

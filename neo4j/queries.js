@@ -1,20 +1,15 @@
 // starter code from https://neo4j.com/developer/javascript/
 
-const neo4j = require('neo4j-driver').v1;
-
-const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'asdfasdf')); // we're just on a localhost.
-const session = driver.session();
-
 const promiseHelper = function promiseHelper(resultPromise, cb) {
   resultPromise.then(res => {
-    console.log(res);
+    // console.log(res);
     cb();
   }).catch(err => {
     console.log(err);
   });
 }
 
-const usersByBirthday = function findUsersWithBirthdaysInRange(lowerBound, upperBound, callback) {
+const usersByBirthday = function findUsersWithBirthdaysInRange(session, lowerBound, upperBound, callback) {
   const query = 'MATCH (n:User) WHERE $lowerBound < toInteger(n.birthday) < $upperBound return n';
   const queryParameters = {
     lowerBound: lowerBound,
@@ -26,10 +21,10 @@ const usersByBirthday = function findUsersWithBirthdaysInRange(lowerBound, upper
   
   // find orders between ... and ...
 
-const ordersByRange = function findOrdersWithTimestampInRange(customer, lowerBound, upperBound, callback) {
-  let query = 'MATCH (n:User {email: $email})-[:PURCHASED] -> (o:Order) ';
-  query = query + 'WHERE $lowerBound < toInteger(o.timestamp) < $upperBound ';
-  query = query + 'RETURN n, o';
+const ordersByRange = function findOrdersWithTimestampInRange(session, customer, lowerBound, upperBound, callback) {
+  let query = 'MATCH (n:User {email: $email})-[:PURCHASED] -> (o:Order) '
+              + 'WHERE $lowerBound < toInteger(o.timestamp) < $upperBound '
+              + 'RETURN n, o';
   const queryParameters = {
     email: customer,
     lowerBound: lowerBound,
@@ -40,10 +35,10 @@ const ordersByRange = function findOrdersWithTimestampInRange(customer, lowerBou
 };
 
 // rec engine: for a user, query what other items they have given what they bought.
-const recEngine = function getRecommendedMerchandiseForUser(customer, callback) {
+const recEngine = function getRecommendedMerchandiseForUser(session, customer, callback) {
   let query = 'MATCH (u:User {email: $email}) -[:PURCHASED]-> (o:Order) -[:CONTAINS]-> (merch:Merchandise) '
-  query = query + '<-[:CONTAINS]- (relatedOrder:Order) -[:CONTAINS]-> (relatedMerch:Merchandise) '
-  query = query + 'RETURN DISTINCT relatedMerch'
+              + '<-[:CONTAINS]- (relatedOrder:Order) -[:CONTAINS]-> (relatedMerch:Merchandise) '
+              + 'RETURN DISTINCT relatedMerch';
   const queryParameters = {
     email: customer
   };
@@ -51,22 +46,22 @@ const recEngine = function getRecommendedMerchandiseForUser(customer, callback) 
   promiseHelper(resultPromise, callback);
 }
 
-const aggregateSpend = function getAggregateSpendingAmountForUser(customer, callback) {
+const aggregateSpend = function getAggregateSpendingAmountForUser(session, customer, callback) {
   let query = 'MATCH (u:User {email: $email}) -[:PURCHASED]-> (o:Order) '
-  query = query + '-[:CONTAINS]-> (m:Merchandise) return sum(toInteger(m.price))'
+              + '-[:CONTAINS]-> (m:Merchandise) return sum(toInteger(m.price))';
   const queryParameters = {
     email: customer
   };
   const resultPromise = session.run(query, queryParameters);
   resultPromise.then(res => {
-    console.log(res.records[0]);
+    // console.log(res.records[0]);
     callback();
   }).catch(err => {
     console.log(err);
   });
 }
 
-const popularity = function getTopThreeMostOrderedItemsForTimeRange(lowerBound, upperBound, callback) {
+const popularity = function getTopThreeMostOrderedItemsForTimeRange(session, lowerBound, upperBound, callback) {
   let query = 'MATCH (o:Order) -[c:CONTAINS]-> (m:Merchandise) '
               + 'WHERE $lowerBound < toInteger(o.timestamp) < $upperBound '
               + 'WITH m, count(c) AS numTimesOrdered '
@@ -79,17 +74,19 @@ const popularity = function getTopThreeMostOrderedItemsForTimeRange(lowerBound, 
   };
   const resultPromise = session.run(query, queryParameters);
   resultPromise.then(res => {
-    res.records.forEach((record) => {
-      console.log(record);
-    });
+    // res.records.forEach((record) => {
+    //   console.log(record);
+    // });
     callback();
   }).catch(err => {
     console.log(err);
   });
 }
 
-// usersByBirthday(818125896, 818135996, () => driver.close());
-// ordersByRange('jLHbGPug00', 1535060020, 1555060320, () => driver.close());
-// recEngine('jLHbGPug00', () => driver.close());
-// aggregateSpend('jLHbGPug00', () => driver.close());
-popularity(1511560866, 1522660866, () => driver.close());
+module.exports = {
+  usersByBirthday,
+  ordersByRange,
+  recEngine,
+  aggregateSpend,
+  popularity
+};
