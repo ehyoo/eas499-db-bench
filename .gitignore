@@ -1,7 +1,8 @@
 
-# Ignore the user_collection
+# Ignore the seed data and the workloads
 data_generator/data/*.json
 data_generator/data/*.csv
+data_generator/workloads/*.json
 
 # Ignore node_modules
 mongodb/node_modules

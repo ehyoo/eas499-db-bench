@@ -95,7 +95,6 @@ const aggregateSpend = function getAggregateSpendingAmountForUser(db, customer, 
 
 const popularity = function getTopThreeMostOrderedItemsForTimeRange(db, lowerBound, upperBound, cb) {
   const ordersCollection = db.collection('orders');
-  console.lo
   ordersCollection.aggregate([
     {$match: {'_id.timestamp': {'$gt': lowerBound, '$lt': upperBound}}},
     {$unwind: '$merchandiseOrdered'},
