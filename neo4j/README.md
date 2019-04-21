@@ -2,12 +2,6 @@ Much of this procedure was derived from https://neo4j.com/developer/guide-import
 We'll have two nodes: Users, Merchandise, and Orders.
 We'll also have a "purchased" relationship between users and orders and a "contains" relationship between orders and merchandise.
 
-Users
- * all the columns we see in the csv
-
-Orders
- * 
-
 After copying the files into the import directory for neo4j:
 ```
 LOAD CSV WITH HEADERS FROM "file:/users.csv" as row
@@ -67,4 +61,4 @@ MATCH (merch:Merchandise {merchId: row.merchandiseId})
 CREATE (order)-[:CONTAINS]->(merch);
 ```
 Where we break apart the "orders_flattened" data since we encountered memory issues when trying to load it in all at once.
-Finally, we are finished, with ~1 million nodes, and ~2 million edges.
+Finally, we are finished, with ~800,000 nodes, and ~2 million edges.

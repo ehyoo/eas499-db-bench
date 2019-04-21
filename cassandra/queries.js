@@ -150,6 +150,19 @@ const popularity = function getTopThreeMostOrderedItemsForTimeRange(client, lowe
   });
 }
 
+const writeOrder = function writeOrder(client, customer, timestamp, merchandiseOrdered, callback) {
+  const query = 'INSERT INTO orders (customer, timestamp, merchandiseid) VALUES (?, ?, ?)';
+  const queryList = merchandiseOrdered.map(m => {
+    return {query, params: [customer, timestamp, m.id]} 
+  });
+  client.batch(queryList, {prepare: true}).then(() =>{
+    callback();
+  }).catch(err => {
+    console.log(err);
+    callback();
+  });
+}
+
 // select merchandiseId, count(merchandiseId) AS num_times_ordered from orders where 
 // timestamp > 1535060020 and timestamp < 1555060320 GROUP BY customer, timestamp allow filtering;
 
@@ -157,5 +170,6 @@ module.exports = {
   usersByBirthday,
   ordersByRange,
   aggregateSpend,
-  popularity
+  popularity,
+  writeOrder
 };

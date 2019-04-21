@@ -19,116 +19,74 @@ const db = new cassandra.Client({
 
 const resultDict = {};
 
-const runBirthdayQueries = function runBirthdayQueries(db, cb) {
-  const readOnlyLoad = JSON.parse(
-    fs.readFileSync('../data_generator/workloads/birthday_load.json', 'utf8'));
-  const opArr = [];
-  readOnlyLoad.forEach(query => {
-    const execFunction = (endCallback) => {
-      Queries.usersByBirthday(db,
-                             query.lowerBound,
-                             query.upperBound,
-                             () => endCallback(null, null));
+const generateExecFunctionArray = function generateExecFunctionArray(db, dataSourceFilePath) {
+  const load = JSON.parse(fs.readFileSync(dataSourceFilePath));
+  const execFunctionArr = load.map((query) => {
+    if (query.operation === 'usersByBirthday') {
+      return (endCallback) => Queries.usersByBirthday(db,
+                                                      query.lowerBound,
+                                                      query.upperBound,
+                                                      () => endCallback(null, null));
+    } else if (query.operation === 'ordersByRange') {
+      return (endCallback) => Queries.ordersByRange(db,
+                                                   query.customer,
+                                                   query.lowerBound,
+                                                   query.upperBound,
+                                                   () => endCallback(null, null));
+    } else if (query.operation === 'recEngine') {
+      return (endCallback) => Queries.recEngine(db,
+                                               query.customer,
+                                               () => endCallback(null, null));
+    } else if (query.operation === 'aggregateSpend') {
+      return (endCallback) => Queries.aggregateSpend(db,
+                                                    query.customer,
+                                                    () => endCallback(null, null));
+    } else if (query.operation === 'popularity') {
+      return (endCallback) => Queries.popularity(db,
+                                                query.lowerBound,
+                                                query.upperBound,
+                                                () => endCallback(null, null));
+    } else if (query.operation === 'writeOrder') {
+      return (endCallback) => Queries.writeOrder(db,
+                                                 query.user,
+                                                 query.timestamp,
+                                                 query.merchandiseOrdered,
+                                                 () => endCallback(null, null));
+    } else {
+      return null;
     }
-    opArr.push(execFunction);
   });
+  return execFunctionArr;
+}
 
-  const start = performance.now();
-  for (let i = 1; i < 6; i++) {
-
-  }
-  async.parallelLimit(opArr, 20, (err, res) => {
-    const end = performance.now();
-    resultDict.birthdayRun = end - start;
-    console.log('Birthday queries done. Took: ' + resultDict.birthdayRun);
-    cb(null);
-  });
-};
-
-const runOrdersByRangeQueries = function runOrdersByRangeQueries(db, cb) {
-  const readOnlyLoad = JSON.parse(
-    fs.readFileSync('../data_generator/workloads/orders_load.json', 'utf8'));
-  const opArr = [];
-
-  readOnlyLoad.forEach(query => {
-    const execFunction = (endCallback) => {
-      Queries.ordersByRange(db,
-                           query.customer,
-                           query.lowerBound,
-                           query.upperBound,
-                           () => endCallback(null, null));
-    }
-    opArr.push(execFunction);
-  });
-
-  const start = performance.now();
-  async.parallelLimit(opArr, 20, (err, res) => {
-    const end = performance.now();
-    resultDict.ordersByRangeRun = end - start;
-    console.log('Orders by range done. Took: ' + resultDict.ordersByRangeRun);
-    cb(null);
-  });
-};
-
-const runAggregateSpendQueries = function runAggregateSpendQueries(db, cb) {
-  const readOnlyLoad = JSON.parse(
-    fs.readFileSync('../data_generator/workloads/aggregate_spend_load.json', 'utf8'));
-  const opArr = [];
-
-  readOnlyLoad.forEach(query => {
-    const execFunction = (endCallback) => {
-      Queries.aggregateSpend(db,
-                             query.customer,
-                             () => endCallback(null, null));
-    }
-    opArr.push(execFunction);
-  });
-
+const executeQueries = function executeQueries(db, loadName, dataSourceFilePath, cb) {
+  const opArr = generateExecFunctionArray(db, dataSourceFilePath);
   const start = performance.now();
   async.parallelLimit(opArr, 20, (err, res) => {
     const end = performance.now();
-    resultDict.aggregateSpendRun = end - start;
-    console.log('Aggregate spend done. Took: ' + resultDict.aggregateSpendRun);
-    cb(null);
-  });
-};
-
-const runPopularityQueries = function runPopularityQueries(db, cb) {
-  const readOnlyLoad = JSON.parse(
-    fs.readFileSync('../data_generator/workloads/popularity_load.json', 'utf8'));
-  const opArr = [];
-
-  readOnlyLoad.forEach(query => {
-    const execFunction = (endCallback) => {
-      Queries.popularity(db,
-                               query.lowerBound,
-                               query.upperBound,
-                               () => endCallback(null, null));
-    }
-    opArr.push(execFunction);
-  });
-
-  const start = performance.now();
-  async.parallelLimit(opArr, 20, (err, res) => {
-    const end = performance.now();
-    resultDict.popularityRun = end - start;
-    console.log('Popularity done. Took: ' + resultDict.popularityRun);
+    resultDict[loadName] = end - start;
+    console.log(`${loadName} done. Took: ${resultDict[loadName]}`);
     cb(null);
   });
 }
 
+/**** Mixed Tests ****/
 
 async.waterfall([
-  (cb) => runBirthdayQueries(db, cb),
-  (cb) => runOrdersByRangeQueries(db, cb),
-  (cb) => runAggregateSpendQueries(db, cb),
-  (cb) => runPopularityQueries(db, cb),
-  (cb) => {console.log(resultDict); db.shutdown()}
+  (cb) => executeQueries(db, 'birthdayRun', '../data_generator/workloads/birthday_mixed_load.json', cb),
+  (cb) => executeQueries(db, 'ordersByRangeRun', '../data_generator/workloads/orders_mixed_load.json', cb),
+  (cb) => executeQueries(db, 'aggregateSpendRun', '../data_generator/workloads/aggregate_spend_mixed_load.json', cb),
+  (cb) => executeQueries(db, 'popularityRun', '../data_generator/workloads/popularity_mixed_load.json', cb),
+  (cb) => {console.log(resultDict); db.shutdown();}
 ]);
 
 
-// usersByBirthday(818125896, 818135996, () => client.shutdown());
-// ordersByRange('jLHbGPug00', 0, 1545616608, () => client.shutdown());
-// recEngine('jLHbGPug00', () => client.shutdown());
-// aggregateSpend('jLHbGPug00', () => client.shutdown());
-// popularity(1511560866, 1522660866, () => client.shutdown());
+/**** Read-only Tests ****/
+
+// async.waterfall([
+//   (cb) => executeQueries(db, 'birthdayRun', '../data_generator/workloads/birthday_load.json', cb),
+//   (cb) => executeQueries(db, 'ordersByRangeRun', '../data_generator/workloads/orders_load.json', cb),
+//   (cb) => executeQueries(db, 'aggregateSpendRun', '../data_generator/workloads/aggregate_spend_load.json', cb),
+//   (cb) => executeQueries(db, 'popularityRun', '../data_generator/workloads/popularity_load.json', cb),
+//   (cb) => {console.log(resultDict); db.shutdown();}
+// ]);

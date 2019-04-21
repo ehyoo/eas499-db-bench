@@ -83,10 +83,36 @@ const popularity = function getTopThreeMostOrderedItemsForTimeRange(session, low
   });
 }
 
+const writeOrder = function writeOrder(session, customer, timestamp, merchandiseOrdered, callback) {
+  let query = 'CREATE (o:Order {customer: $customer, timestamp: $timestamp}) '
+              + 'WITH o '
+              + 'MATCH (u:User {email:$customer}) '
+              + 'CREATE (u)-[:PURCHASED]->(o) '
+              + 'with u, o '
+              + 'MATCH (m:Merchandise) WHERE m.merchId IN $merchIdArray '
+              + 'CREATE (o)-[:CONTAINS]->(m) '
+              + 'RETURN u, o, m';
+  const queryParameters = {
+    customer,
+    timestamp,
+    merchIdArray: merchandiseOrdered.map(m => m.id)
+  };
+  const resultPromise = session.run(query, queryParameters);
+  resultPromise.then(res => {
+    // res.records.forEach((record) => {
+    //   console.log(record);
+    // });
+    callback();
+  }).catch(err => {
+    console.log(err);
+  });
+}
+
 module.exports = {
   usersByBirthday,
   ordersByRange,
   recEngine,
   aggregateSpend,
-  popularity
+  popularity,
+  writeOrder
 };

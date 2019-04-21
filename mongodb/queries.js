@@ -105,10 +105,29 @@ const popularity = function getTopThreeMostOrderedItemsForTimeRange(db, lowerBou
   });
 };
 
+const writeOrder = function writeOrder(db, userId, timestamp, merchandiseOrdered ,cb) {
+  const ordersCollection = db.collection('orders');
+  ordersCollection.insertOne({
+    _id: {
+      customer: userId,
+      timestamp: timestamp
+    },
+    merchandiseOrdered
+  }, (err, res) => {
+    if (!err) {
+      cb();
+    } else {
+      console.log(err);
+      cb();
+    }
+  });
+}
+
 module.exports = {
   usersByBirthday,
   ordersByRange,
   recEngine,
   aggregateSpend,
-  popularity
+  popularity,
+  writeOrder
 };
