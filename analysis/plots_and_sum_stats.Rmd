@@ -1,0 +1,123 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+tests.df <- read.csv('./tests.csv')
+cassandra.tests.df <- tests.df[tests.df$database == "cassandra", ]
+mongo.tests.df <- tests.df[tests.df$database == "mongodb", ]
+neo4j.tests.df <- tests.df[tests.df$database == "neo4j", ]
+
+# Convenience variable for analysis
+numeric.cols <- c('aggregateSpendRun', 'birthdayRun', 'ordersByRangeRun', 'popularityRun', 'recEngineRun')
+```
+
+### Aggregate summary statistics
+```{r}
+summary(tests.df)
+```
+
+```{r}
+summary(cassandra.tests.df)
+```
+
+
+
+```{r}
+summary(neo4j.tests.df)
+```
+
+Some helper methods:
+```{r}
+get.summary.statistics <- function(df, which.Db) {
+  print(sprintf("Printing Summary Statistics for %s", which.Db))
+  print("Aggregate")
+  print(summary(df))
+  print("Read-only")
+  print(summary(df[df$test_type == 'read_only', ]))
+  print("Mixed")
+  print(summary(df[df$test_type=='mixed', ]))
+}
+```
+
+```{r}
+get.bar.plots.for.tests <- function(df, which.Db) {
+  read.only.df <- df[df$test_type == 'read_only', ]
+  mixed.df <- df[df$test_type=='mixed', ]
+  par(mfrow=c(2,3))
+  for (i in 1:5) {
+    read.means <- mean(read.only.df[, numeric.cols[i]])
+    mixed.means <- mean(mixed.df[, numeric.cols[i]])
+    barplot(c(read.means, mixed.means), names.arg=c("read", "mixed"), main=sprintf("%s: %s", which.Db, numeric.cols[i]))
+  }
+}
+```
+
+
+
+### MongoDB
+```{r}
+get.summary.statistics(mongo.tests.df, "MongoDB")
+```
+
+```{r}
+get.bar.plots.for.tests(mongo.tests.df, "MongoDB")
+```
+
+### Neo4j
+```{r}
+get.summary.statistics(neo4j.tests.df, "Neo4j")
+```
+
+```{r}
+get.bar.plots.for.tests(neo4j.tests.df, "Neo4j")
+```
+
+### Cassandra
+```{r}
+cassandra.tests.df$recEngineRun <- 0 # Set this to zero, just so our methods don't blow up on us.
+get.summary.statistics(cassandra.tests.df, "Cassandra")
+```
+
+```{r}
+get.bar.plots.for.tests(cassandra.tests.df, "Cassandra")
+```
+
+### Side-by-side comparisons
+First, taking a look at reads: 
+```{r}
+mongo.read.only.df <- mongo.tests.df[mongo.tests.df$test_type == 'read_only', ]
+cassandra.read.only.df <- cassandra.tests.df[cassandra.tests.df$test_type == 'read_only', ]
+neo4j.read.only.df <- neo4j.tests.df[neo4j.tests.df$test_type == 'read_only', ]
+
+par(mfrow=c(2,3))
+for (i in 1:5) {
+  mongo.read.means <- mean(mongo.read.only.df[, numeric.cols[i]])
+  cassandra.read.means <- mean(cassandra.read.only.df[, numeric.cols[i]])
+  neo4j.read.means <- mean(neo4j.read.only.df[, numeric.cols[i]])
+  barplot(c(mongo.read.means,
+            cassandra.read.means,
+            neo4j.read.means),
+          names.arg=c("MongoDB", "C*", "Neo4j"),
+          main=sprintf("Read-only: %s", numeric.cols[i]))
+}
+```
+
+```{r}
+mongo.mixed.df <- mongo.tests.df[mongo.tests.df$test_type == 'mixed', ]
+cassandra.mixed.df <- cassandra.tests.df[cassandra.tests.df$test_type == 'mixed', ]
+neo4j.mixed.df <- neo4j.tests.df[neo4j.tests.df$test_type == 'mixed', ]
+
+par(mfrow=c(2,3))
+for (i in 1:5) {
+  mongo.mixed.means <- mean(mongo.mixed.df[, numeric.cols[i]])
+  cassandra.mixed.means <- mean(cassandra.mixed.df[, numeric.cols[i]])
+  neo4j.mixed.means <- mean(neo4j.mixed.df[, numeric.cols[i]])
+  barplot(c(mongo.mixed.means,
+            cassandra.mixed.means,
+            neo4j.mixed.means),
+          names.arg=c("MongoDB", "C*", "Neo4j"),
+          main=sprintf("Mixed: %s", numeric.cols[i]))
+}
+```

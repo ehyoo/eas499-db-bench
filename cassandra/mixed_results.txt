@@ -1,0 +1,22 @@
+[
+{ "birthdayRun": 11734.420799999963,
+  "ordersByRangeRun": 86.41540000028908,
+  "aggregateSpendRun": 285.28060000017285,
+  "popularityRun": 28905.498000000138 },
+{ "birthdayRun": 16787.526399999857,
+  "ordersByRangeRun": 142.19200000027195,
+  "aggregateSpendRun": 355.7416000002995,
+  "popularityRun": 28916.36320000002 },
+{ "birthdayRun": 15828.818200000096,
+  "ordersByRangeRun": 136.7705999999307,
+  "aggregateSpendRun": 451.4932000003755,
+  "popularityRun": 33907.64039999992 },
+{ "birthdayRun": 11488.532899999991,
+  "ordersByRangeRun": 108.78169999970123,
+  "aggregateSpendRun": 341.17050000000745,
+  "popularityRun": 29879.512899999972 },
+{ "birthdayRun": 13639.486099999864,
+  "ordersByRangeRun": 109.6406999998726,
+  "aggregateSpendRun": 298.24420000007376,
+  "popularityRun": 32473.875500000082 }
+]

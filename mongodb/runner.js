@@ -70,33 +70,33 @@ const executeQueries = function executeQueries(db, loadName, dataSourceFilePath,
 // Should only run one at a time.
 
 /**** Mixed Tests ****/
-// client.connect((err) => {
-//     console.log("Connected successfully to server");
-//     const db = client.db(dbName);
-//     async.waterfall([
-//       (cb) => executeQueries(db, 'birthdayRun', '../data_generator/workloads/birthday_mixed_load.json', cb),
-//       (cb) => executeQueries(db, 'ordersByRangeRun', '../data_generator/workloads/orders_mixed_load.json', cb),
-//       (cb) => executeQueries(db, 'recEngineRun', '../data_generator/workloads/rec_engine_mixed_load.json', cb),
-//       (cb) => executeQueries(db, 'aggregateSpendRun', '../data_generator/workloads/aggregate_spend_mixed_load.json', cb),
-//       (cb) => executeQueries(db, 'popularityRun', '../data_generator/workloads/popularity_mixed_load.json', cb),
-//       (cb) => {console.log(resultDict); client.close()}
-//     ]);
-//   }
-// );
-
-/**** Read-only Tests ****/
 client.connect((err) => {
     console.log("Connected successfully to server");
     const db = client.db(dbName);
     async.waterfall([
-      (cb) => executeQueries(db, 'birthdayRun', '../data_generator/workloads/birthday_load.json', cb),
-      (cb) => executeQueries(db, 'ordersByRangeRun', '../data_generator/workloads/orders_load.json', cb),
-      (cb) => executeQueries(db, 'recEngineRun', '../data_generator/workloads/rec_engine_load.json', cb),
-      (cb) => executeQueries(db, 'aggregateSpendRun', '../data_generator/workloads/aggregate_spend_load.json', cb),
-      (cb) => executeQueries(db, 'popularityRun', '../data_generator/workloads/popularity_load.json', cb),
+      (cb) => executeQueries(db, 'birthdayRun', '../data_generator/workloads/birthday_mixed_load.json', cb),
+      (cb) => executeQueries(db, 'ordersByRangeRun', '../data_generator/workloads/orders_mixed_load.json', cb),
+      (cb) => executeQueries(db, 'recEngineRun', '../data_generator/workloads/rec_engine_mixed_load.json', cb),
+      (cb) => executeQueries(db, 'aggregateSpendRun', '../data_generator/workloads/aggregate_spend_mixed_load.json', cb),
+      (cb) => executeQueries(db, 'popularityRun', '../data_generator/workloads/popularity_mixed_load.json', cb),
       (cb) => {console.log(resultDict); client.close()}
     ]);
   }
 );
+
+/**** Read-only Tests ****/
+// client.connect((err) => {
+//     console.log("Connected successfully to server");
+//     const db = client.db(dbName);
+//     async.waterfall([
+//       (cb) => executeQueries(db, 'birthdayRun', '../data_generator/workloads/birthday_load.json', cb),
+//       (cb) => executeQueries(db, 'ordersByRangeRun', '../data_generator/workloads/orders_load.json', cb),
+//       (cb) => executeQueries(db, 'recEngineRun', '../data_generator/workloads/rec_engine_load.json', cb),
+//       (cb) => executeQueries(db, 'aggregateSpendRun', '../data_generator/workloads/aggregate_spend_load.json', cb),
+//       (cb) => executeQueries(db, 'popularityRun', '../data_generator/workloads/popularity_load.json', cb),
+//       (cb) => {console.log(resultDict); client.close()}
+//     ]);
+//   }
+// );
 
 
