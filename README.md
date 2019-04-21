@@ -50,7 +50,13 @@ We provide five separate queries:
  * `getTopThreeMostOrderedItemsForTimeRange`: Given two dates, find the three most ordered items.
 
 ## Setup and Execution
-Run `generate_random_load.py`, and follow the READMEs in each database directory to setup and seed the 
-databases with the data.
+Run `generate_seed_data.py`, and follow the READMEs in each database directory to setup and seed the 
+databases with the data. In particular, make sure to move the required files into Neo4j's import directory.
 
+Then, run `generate_workloads.py` to generate the series of queries to run. This will make 10 different workloads, two for each query
+type seen above. One is all reads (just the query) and one is reads interlaced with writes to orders.
+
+To then execute the tests, run `runner.js` in each respective database. There is code to comment/uncomment to toggle each test.
+
+When running the read/write mixture tests, be sure to clean and re-seed the databases each time.
 
