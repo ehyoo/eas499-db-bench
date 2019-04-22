@@ -1,3 +1,6 @@
+// Starter and connection code from MongoDB documentation:
+// https://github.com/mongodb/node-mongodb-native
+
 const MongoClient = require('mongodb').MongoClient;
 const async = require('async');
 const fs = require('fs');
@@ -64,10 +67,6 @@ const executeQueries = function executeQueries(db, loadName, dataSourceFilePath,
     cb(null);
   });
 }
-
-// Use connect method to connect to the Server
-
-// Should only run one at a time.
 
 /**** Mixed Tests ****/
 client.connect((err) => {

@@ -1,3 +1,5 @@
+// Starter code from https://neo4j.com/developer/javascript/
+
 const neo4j = require('neo4j-driver').v1;
 const async = require('async');
 const fs = require('fs');

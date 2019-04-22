@@ -1,5 +1,3 @@
-// starter code from https://neo4j.com/developer/javascript/
-
 const promiseHelper = function promiseHelper(resultPromise, cb) {
   resultPromise.then(res => {
     // console.log(res);
@@ -19,8 +17,6 @@ const usersByBirthday = function findUsersWithBirthdaysInRange(session, lowerBou
   promiseHelper(resultPromise, callback);
 };
   
-  // find orders between ... and ...
-
 const ordersByRange = function findOrdersWithTimestampInRange(session, customer, lowerBound, upperBound, callback) {
   let query = 'MATCH (n:User {email: $email})-[:PURCHASED] -> (o:Order) '
               + 'WHERE $lowerBound < toInteger(o.timestamp) < $upperBound '
@@ -34,7 +30,6 @@ const ordersByRange = function findOrdersWithTimestampInRange(session, customer,
   promiseHelper(resultPromise, callback);
 };
 
-// rec engine: for a user, query what other items they have given what they bought.
 const recEngine = function getRecommendedMerchandiseForUser(session, customer, callback) {
   let query = 'MATCH (u:User {email: $email}) -[:PURCHASED]-> (o:Order) -[:CONTAINS]-> (merch:Merchandise) '
               + '<-[:CONTAINS]- (relatedOrder:Order) -[:CONTAINS]-> (relatedMerch:Merchandise) '

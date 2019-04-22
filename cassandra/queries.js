@@ -163,9 +163,6 @@ const writeOrder = function writeOrder(client, customer, timestamp, merchandiseO
   });
 }
 
-// select merchandiseId, count(merchandiseId) AS num_times_ordered from orders where 
-// timestamp > 1535060020 and timestamp < 1555060320 GROUP BY customer, timestamp allow filtering;
-
 module.exports = {
   usersByBirthday,
   ordersByRange,

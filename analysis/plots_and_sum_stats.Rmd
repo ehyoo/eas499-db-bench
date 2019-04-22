@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  word_document: default
+  html_notebook: default
 ---
 
 ```{r}
@@ -95,8 +97,8 @@ sd.df
 
 
 ```{r}
-write.csv(means.df, file="means.csv")
-write.csv(sd.df, file="stddevs.csv")
+# write.csv(means.df, file="means.csv")
+# write.csv(sd.df, file="stddevs.csv")
 ```
 
 
@@ -119,11 +121,17 @@ Some helper methods:
 get.summary.statistics <- function(df, which.Db) {
   print(sprintf("Printing Summary Statistics for %s", which.Db))
   print("Aggregate")
-  print(summary(df))
+  aggregate.summary <- summary(df)
+  write.csv(as.matrix(aggregate.summary), sprintf("%s_aggregate.csv", which.Db))
+  print(aggregate.summary)
   print("Read-only")
-  print(summary(df[df$test_type == 'read_only', ]))
+  read.summary <- summary(df[df$test_type == 'read_only', ])
+  write.csv(as.matrix(read.summary), sprintf("%s_read.csv", which.Db))
+  print(read.summary)
   print("Mixed")
-  print(summary(df[df$test_type=='mixed', ]))
+  mixed.summary <- summary(df[df$test_type=='mixed', ])
+  write.csv(as.matrix(mixed.summary), sprintf("%s_mixed.csv", which.Db))
+  print(mixed.summary)
 }
 ```
 
@@ -145,6 +153,7 @@ get.bar.plots.for.tests <- function(df, which.Db) {
 ### MongoDB
 ```{r}
 get.summary.statistics(mongo.tests.df, "MongoDB")
+
 ```
 
 ```{r}
