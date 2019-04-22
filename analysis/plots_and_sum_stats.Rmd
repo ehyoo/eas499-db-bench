@@ -9,11 +9,97 @@ cassandra.tests.df <- tests.df[tests.df$database == "cassandra", ]
 mongo.tests.df <- tests.df[tests.df$database == "mongodb", ]
 neo4j.tests.df <- tests.df[tests.df$database == "neo4j", ]
 
+mongo.read.only.df <- mongo.tests.df[mongo.tests.df$test_type == 'read_only', ]
+cassandra.read.only.df <- cassandra.tests.df[cassandra.tests.df$test_type == 'read_only', ]
+neo4j.read.only.df <- neo4j.tests.df[neo4j.tests.df$test_type == 'read_only', ]
+mongo.mixed.df <- mongo.tests.df[mongo.tests.df$test_type == 'mixed', ]
+cassandra.mixed.df <- cassandra.tests.df[cassandra.tests.df$test_type == 'mixed', ]
+neo4j.mixed.df <- neo4j.tests.df[neo4j.tests.df$test_type == 'mixed', ]
+
 # Convenience variable for analysis
 numeric.cols <- c('aggregateSpendRun', 'birthdayRun', 'ordersByRangeRun', 'popularityRun', 'recEngineRun')
 ```
 
 ### Aggregate summary statistics
+
+Table in the main report:
+```{r}
+get.means.col <- function(which.col) {
+  return(c(
+    mean(tests.df[, which.col]),
+    mean(mongo.tests.df[, which.col]),
+    mean(mongo.read.only.df[, which.col]),
+    mean(mongo.mixed.df[, which.col]),
+    mean(cassandra.tests.df[, which.col]),
+    mean(cassandra.read.only.df[, which.col]),
+    mean(cassandra.mixed.df[, which.col]),
+    mean(neo4j.tests.df[, which.col]),
+    mean(neo4j.read.only.df[, which.col]),
+    mean(neo4j.mixed.df[, which.col])
+  ))
+}
+
+get.sd.col <- function(which.col) {
+  return(c(
+    sd(tests.df[, which.col]),
+    sd(mongo.tests.df[, which.col]),
+    sd(mongo.read.only.df[, which.col]),
+    sd(mongo.mixed.df[, which.col]),
+    sd(cassandra.tests.df[, which.col]),
+    sd(cassandra.read.only.df[, which.col]),
+    sd(cassandra.mixed.df[, which.col]),
+    sd(neo4j.tests.df[, which.col]),
+    sd(neo4j.read.only.df[, which.col]),
+    sd(neo4j.mixed.df[, which.col])
+  ))
+}
+
+db.and.class.col <- c(
+  "All",
+  "MongoDB (Aggregate)",
+  "MongoDB (Read-only)",
+  "MongoDB (Mixed)",
+  "C* (Aggregate)",
+  "C* (Read-only)",
+  "C* (Mixed)",
+  "Neo4j (Aggregate)",
+  "Neo4j (Read-only)",
+  "Neo4j (Mixed)"
+)
+
+means.df <- data.frame(
+  'DB and Class'=db.and.class.col,
+   'aggregateSpendRun'=get.means.col('aggregateSpendRun'),
+   'birthdayRun'=get.means.col('birthdayRun'),
+   'ordersByRangeRun'=get.means.col('ordersByRangeRun'),
+   'popularityRun'=get.means.col('popularityRun'),
+   'recEngineRun'=get.means.col('recEngineRun')
+)
+sd.df <- data.frame(
+  'DB and Class'=db.and.class.col,
+   'aggregateSpendRun'=get.sd.col('aggregateSpendRun'),
+   'birthdayRun'=get.sd.col('birthdayRun'),
+   'ordersByRangeRun'=get.sd.col('ordersByRangeRun'),
+   'popularityRun'=get.sd.col('popularityRun'),
+   'recEngineRun'=get.sd.col('recEngineRun')
+)
+```
+
+```{r}
+means.df
+```
+
+```{r}
+sd.df
+```
+
+
+```{r}
+write.csv(means.df, file="means.csv")
+write.csv(sd.df, file="stddevs.csv")
+```
+
+
 ```{r}
 summary(tests.df)
 ```
@@ -87,10 +173,6 @@ get.bar.plots.for.tests(cassandra.tests.df, "Cassandra")
 ### Side-by-side comparisons
 First, taking a look at reads: 
 ```{r}
-mongo.read.only.df <- mongo.tests.df[mongo.tests.df$test_type == 'read_only', ]
-cassandra.read.only.df <- cassandra.tests.df[cassandra.tests.df$test_type == 'read_only', ]
-neo4j.read.only.df <- neo4j.tests.df[neo4j.tests.df$test_type == 'read_only', ]
-
 par(mfrow=c(2,3))
 for (i in 1:5) {
   mongo.read.means <- mean(mongo.read.only.df[, numeric.cols[i]])
@@ -105,10 +187,6 @@ for (i in 1:5) {
 ```
 
 ```{r}
-mongo.mixed.df <- mongo.tests.df[mongo.tests.df$test_type == 'mixed', ]
-cassandra.mixed.df <- cassandra.tests.df[cassandra.tests.df$test_type == 'mixed', ]
-neo4j.mixed.df <- neo4j.tests.df[neo4j.tests.df$test_type == 'mixed', ]
-
 par(mfrow=c(2,3))
 for (i in 1:5) {
   mongo.mixed.means <- mean(mongo.mixed.df[, numeric.cols[i]])
